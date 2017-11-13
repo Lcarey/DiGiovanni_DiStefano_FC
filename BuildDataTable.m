@@ -5,8 +5,8 @@ LOC = 'Data/percentage_in_periphery_per_gene/' ;
 cd(WD)
 %% which genes deleted in each strain?
 % run Mendoza17_ID_Deleted_ORFs_From_Annotation.m
-IDDeletedORFsFromAnnotation
-
+ [ A , SGD ] = IDDeletedORFsFromAnnotation()
+ 
 %% load data
 strains = {'409' '524' '527' '1138' '1228' '1379' '1387' '1380' '1388' '1788' '1793'} ;
 %figure;  hold on ;

@@ -1,4 +1,12 @@
-%% parse strain_annotation_regions.tab and id ORFs that are deleted
+function [ A , SGD ] = IDDeletedORFsFromAnnotation()
+%% [ A , SGD ] = IDDeletedORFsFromAnnotation();
+% 
+% parse strain annotation tab file and id ORFs that are deleted in FC
+% strains
+%
+% LBC
+
+%%  load SGD features .tab file
 SGD = loadSGDFeaturesDS();
 SGD = dataset2table( SGD( strcmp(SGD.TYPE,'ORF'),:) ) ;
 SGD = SGD( : , {'ORF' 'GENE' 'Chr' 'Start' 'End'} );
@@ -6,7 +14,7 @@ SGD.max_pos = max( [SGD.Start SGD.End], [] , 2) ;
 SGD.min_pos = min( [SGD.Start SGD.End], [] , 2) ; 
 A = readtable('strain_annotation_regions.tab','FileType','text','Delimiter','\t');
 
-%% fill in genes
+%% fill in gene names
 for I = 1:height(SGD)
     if isempty(SGD.GENE{I})
         SGD.GENE{I} = SGD.ORF{I};

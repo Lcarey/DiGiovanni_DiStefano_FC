@@ -1,4 +1,5 @@
 %addpath(genpath('~/Develop/Matlab/'));
+addpath(genpath('~/Develop/DiGiovanni_DiStefano_FC/'));
 WD = '~/Develop/DiGiovanni_DiStefano_FC/' ;
 RNA = 'Data/kallisto/' ;
 LOC = 'Data/percentage_in_periphery_per_gene/' ;
@@ -6,7 +7,7 @@ cd(WD)
 %% which genes deleted in each strain?
 % run Mendoza17_ID_Deleted_ORFs_From_Annotation.m
  [ A , SGD ] = IDDeletedORFsFromAnnotation() ;
- 
+
 %% load data
 strains = {'409' '524' '527' '1138' '1228' '1379' '1387' '1380' '1388' '1788' '1793'} ;
 s = struct();

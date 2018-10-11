@@ -1,6 +1,13 @@
-%% Plot some figures
-figname = 'FoldChange_vs_Pdiff.eps';
+BB = readtable('~/Data/Brauer08/TableS1.xls');
+ESR_UP_list = BB.ORF( strcmp(BB.ESR,'up'));
+ESR_DN_list = BB.ORF( strcmp(BB.ESR,'down'));
+GR_UP_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'up'));
+GR_DN_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'down'));
+
 load('PP.mat');
+
+% Plot some figures
+figname = 'FoldChange_vs_Pdiff.eps';
 
 X = NaN(0);
 Y = NaN(0);
@@ -15,7 +22,18 @@ for I = 2:height(A)
     orfs = vertcat( orfs , PP.target_id);
 end
 
-%%
+
+%% optionally, remove genes that are part of the ESR or Growth Rate Response
+idx_to_discard_esr = ismember(orfs,ESR_UP_list) | ismember(orfs,ESR_DN_list) ; 
+idx_to_discard_gr_response = ismember(orfs,GR_DN_list) | ismember(orfs,GR_UP_list) ; 
+idx_to_keep = ~idx_to_discard_esr  & ~idx_to_discard_gr_response ;
+
+orfs = orfs(idx_to_keep);
+X = X(idx_to_keep);
+Y = Y(idx_to_keep);
+ID = ID(idx_to_keep);
+
+%% Main figures for text
 
 fh = figure('units','centimeters','position',[5 5 12 7]);
 hold on ;
@@ -33,6 +51,7 @@ ylim([-0.75 0.75])
 ylabel('Fold change in expression')
 xlabel('Decrease in time spent in the nuclear periphery')
 xlim([1.5 max(xlim)])
+title([ 'N = ' num2str(numel(Y))])
 print('-dpsc2',figname,'-append');
 close; 
 
@@ -48,6 +67,8 @@ ylim([-2.1 2.1])
 ylabel('Fold change in expression')
 xlabel('Decrease in time spent in the nuclear periphery')
 line([-1 100] , [nanmedian(Y) nanmedian(Y)],'LineStyle','--','Color',[.7 .7 .7])
+title([ 'N = ' num2str(numel(Y))])
+
 print('-dpsc2',figname,'-append');
 close; 
 
@@ -56,6 +77,7 @@ grps = round(X/5)*5 ;
 [c,m,h,nms] = multcompare(stats,'Display','off');
 pvals = squareform(c(:,6)) ;
 pvals(: , 2)
+close ; 
 
 %% show that this is the same result for all strains
 Q=table();
@@ -78,6 +100,7 @@ set(gca,'xticklabel',A.ID(2:end))
 set(gca,'ytick',arrayfun( @(X) round(log2(X/100)*100)/100 , 100:5:200))
 ylabel('% increase in expression')
 set(gca,'yticklabel',[0:5:100])
+print('-dpsc2',figname,'-append');
 
 %% plot area around STL1
 

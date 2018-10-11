@@ -1,12 +1,16 @@
 %% Figure for expression vs % peripheral
 load PP
-%%
-geneproperties = readtable('~/Google Drive/CareyLab/ExternalData/Yeast/protein_properties.tab','FileType','text');
+SGD = loadSGDFeatures();
+Q = innerjoin(PP,dataset2table(SGD(strcmp(SGD.TYPE,'ORF'),:)),'LeftKey','target_id','RightKey','ORF');
+
+geneproperties = readtable('~/Data/Yeast/protein_properties.tab','FileType','text');
+Q = innerjoin( Q, geneproperties,'LeftKey','target_id','RightKey','ORF');
+Q.ORF = Q.target_id ; 
 %%
 fh = figure('units','centimeters','position',[5 5 7 7 ]);
 sh = scatter( PP.PP_409 , PP.Expr_409 , 20 , 'k' ,'MarkerFaceColor',[.7 .7 .7],'MarkerEdgeAlpha',0.5,'MarkerFaceAlpha',0.5);
 set(gca,'yscale','log')
-ylabel('Expression dTPM)')
+ylabel('Expression (TPM)')
 xlabel('% peripheral (predicted)')
 axis tight;
 [c,p] = corr(  PP.PP_409 , log10(PP.Expr_409) )
@@ -19,9 +23,9 @@ ylabel('Expression dTPM)')
 xlabel('kb to telomere (log10)')
 axis tight;
 [c,p] = corr(  log10(PP.nt_to_closest_end ./ 1000)  , log10(PP.Expr_409) )
-
+set(gca,'xdir','reverse')
 %%
-X = zscore([ Q.CAI  Q.CodonBias Q.FOPScore  Q.PP_409 Q.nt_to_closest_end Q.ProteinLength Q.PI ]) ; 
+X = zscore([ Q.CAI  Q.CodonBias Q.FOPScore  Q.PP_409 (Q.nt_to_closest_end) Q.ProteinLength Q.PI ]) ; 
 Y = (Q.Expr_409)  ; 
 ydist = 'poisson' ;
 mdlstr = 'y ~ x1 + x2 + x3 + x6 +x7' ;
@@ -47,9 +51,9 @@ mdlNTVVLOW = addTerms(mdlVVLOW , 'x5');
 mdlPPVVLOW = addTerms(mdlVVLOW , 'x4');
 
 
-mdlVVVLOW = fitglm(X(Y<t4,:),Y(Y<t4),mdlstr,'Distribution',ydist);
-mdlNTVVVLOW = addTerms(mdlVVVLOW , 'x5');
-mdlPPVVVLOW = addTerms(mdlVVVLOW , 'x4');
+%mdlVVVLOW = fitglm(X(Y<t4,:),Y(Y<t4),mdlstr,'Distribution',ydist);
+%mdlNTVVVLOW = addTerms(mdlVVVLOW , 'x5');
+%mdlPPVVVLOW = addTerms(mdlVVVLOW , 'x4');
 
 fprintf('%0.04f\t%0.04f\t%0.04f\n' , mdl.Rsquared.Ordinary , mdlPP.Rsquared.Ordinary , mdl1.Rsquared.Ordinary );
 %%

@@ -7,7 +7,7 @@ GR_DN_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'down'));
 
 
 load('PP.mat');
-%PP = PP( PP.nt_to_closest_end > 5e4 , : );
+%PP = PP( PP.nt_to_closest_end > 5e4 , : );  
 % PP = PP( PP.nt_to_closest_end > 5e4 , : ); % remove subtelomeric
 
 vn = PP.Properties.VariableNames ; 

@@ -5,7 +5,8 @@ GR_UP_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'up'));
 GR_DN_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'down'));
 
 load('PP.mat');
-
+high_expressed_idx =  PP.Expr_409 > prctile(PP.Expr_409 , 50) ; 
+PP = PP( high_expressed_idx , :) ; 
 % Plot some figures
 figname = 'FoldChange_vs_Pdiff.eps';
 
@@ -22,6 +23,12 @@ for I = 2:height(A)
     orfs = vertcat( orfs , PP.target_id);
 end
 
+X(X>30) = 31 ; 
+GROUPS = round(X/5)*5 ; 
+[ug,n]=count_unique(GROUPS) ;
+keep_groups = ug(n>=10);
+Y = Y( ismember(GROUPS,keep_groups));
+GROUPS = GROUPS( ismember(GROUPS,keep_groups));
 
 %% optionally, remove genes that are part of the ESR or Growth Rate Response
 idx_to_discard_esr = ismember(orfs,ESR_UP_list) | ismember(orfs,ESR_DN_list) ; 
@@ -38,24 +45,23 @@ ID = ID(idx_to_keep);
 fh = figure('units','centimeters','position',[5 5 12 7]);
 hold on ;
 line([-1 100] , [nanmedian(Y) nanmedian(Y)],'LineStyle','--','Color',[.7 .7 .7])
-X(X>30) = 31 ; 
-bh = boxplot( Y , round(X/5)*5,'notch','on','Symbol','');
+bh = boxplot( Y , GROUPS ,'notch','on','Symbol','');
 h = findobj(gca,'Tag','Box');
 for j=1:length(h)
     patch(get(h(j),'XData'),get(h(j),'YData'),[.7 .7 .7],'FaceAlpha',.5);
 end
-for I = 1:length(bh)
+for I = 1:size(bh,2)
     set(bh(6,I),'LineWidth',3)
 end
 ylim([-0.75 0.75])
 ylabel('Fold change in expression')
 xlabel('Decrease in time spent in the nuclear periphery')
 xlim([1.5 max(xlim)])
-title([ 'N = ' num2str(numel(Y))])
+title([ '# genes = ' num2str(numel(Y))])
 print('-dpsc2',figname,'-append');
 close; 
 
-
+%%
 Yo = Y;
 Yo(Yo>2) = 2;
 Yo(Yo<-2)=-2;

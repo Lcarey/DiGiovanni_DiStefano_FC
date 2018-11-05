@@ -5,24 +5,37 @@ GR_UP_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'up'));
 GR_DN_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'down'));
 
 load('PP.mat');
-high_expressed_idx =  PP.Expr_409 > prctile(PP.Expr_409 , 50) ; 
-PP = PP( high_expressed_idx , :) ; 
+%high_expressed_idx =  PP.Expr_409 > prctile(PP.Expr_409 , 50) ; 
+%PP = PP( high_expressed_idx , :) ; 
 % Plot some figures
 figname = 'FoldChange_vs_Pdiff.eps';
 
+%% Arms with deletions
+
+    
 X = NaN(0);
 Y = NaN(0);
+dt = NaN(0);
 orfs = cell(0);
 ID = NaN(0);
+idx_on_arm_with_deletion = NaN(0);
+expr_in_409 = NaN(0);
 for I = 2:height(A)
     vnE =  [ 'Efc_' num2str(A.ID(I)) ] ;
     vnP =  [ 'Pdiff_' num2str(A.ID(I)) ] ;
+    expr = PP.(vnE) ; 
+    expr_in_409 = vertcat( expr_in_409 , PP.Expr_409 ) ;
+    gene_chr_arm_ids = cellfun( @(X)X(1:3) , PP.target_id ,'UniformOutput',false );
+    these_arms_have_tel_deletions = unique(gene_chr_arm_ids(isnan(expr))) ; 
+    idx_on_arm_with_deletion = vertcat( idx_on_arm_with_deletion , ismember(gene_chr_arm_ids,these_arms_have_tel_deletions) ); 
     X = vertcat( X , PP.(vnP));
-    Y = vertcat( Y , PP.(vnE));
+    Y = vertcat( Y , expr );
+    dt = vertcat( dt , PP.nt_to_closest_end ) ; 
     ID = vertcat( ID , repmat(A.ID(I) , numel(PP.(vnP)),1) );
     orfs = vertcat( orfs , PP.target_id);
 end
-
+idx_on_arm_with_deletion = logical(idx_on_arm_with_deletion) ; 
+%% group by %PP
 X(X>30) = 31 ; 
 GROUPS = round(X/5)*5 ; 
 [ug,n]=count_unique(GROUPS) ;
@@ -31,15 +44,19 @@ Y = Y( ismember(GROUPS,keep_groups));
 GROUPS = GROUPS( ismember(GROUPS,keep_groups));
 
 %% optionally, remove genes that are part of the ESR or Growth Rate Response
+DISCARD_FLAG  = false ; 
+
+if DISCARD_FLAG
 idx_to_discard_esr = ismember(orfs,ESR_UP_list) | ismember(orfs,ESR_DN_list) ; 
 idx_to_discard_gr_response = ismember(orfs,GR_DN_list) | ismember(orfs,GR_UP_list) ; 
 idx_to_keep = ~idx_to_discard_esr  & ~idx_to_discard_gr_response ;
 
-orfs = orfs(idx_to_keep);
-X = X(idx_to_keep);
-Y = Y(idx_to_keep);
-ID = ID(idx_to_keep);
-
+orfs = orfs(idx_to_keep) ;
+X = X(idx_to_keep) ;
+Y = Y(idx_to_keep) ;
+ID = ID(idx_to_keep) ;
+GROUPS = GROUPS(idx_to_keep) ; 
+end
 %% Main figures for text
 
 fh = figure('units','centimeters','position',[5 5 12 7]);
@@ -58,8 +75,82 @@ ylabel('Fold change in expression')
 xlabel('Decrease in time spent in the nuclear periphery')
 xlim([1.5 max(xlim)])
 title([ '# genes = ' num2str(numel(Y))])
-print('-dpsc2',figname,'-append');
-close; 
+%print('-dpsc2',figname,'-append');
+%close; 
+
+
+%% Xaxis is dist from telomere
+
+GROUPS = round( ( dt./10000 )) * 10 ;
+
+fh = figure('units','centimeters','position',[5 5 12 7]);
+hold on ;
+line([-1 100] , [nanmedian(Y) nanmedian(Y)],'LineStyle','--','Color',[.7 .7 .7])
+bh = boxplot( Y(idx_on_arm_with_deletion) , GROUPS(idx_on_arm_with_deletion) ,'notch','on','Symbol','');
+h = findobj(gca,'Tag','Box');
+for j=1:length(h)
+    patch(get(h(j),'XData'),get(h(j),'YData'),[.7 .7 .7],'FaceAlpha',.5);
+end
+for I = 1:size(bh,2)
+    set(bh(6,I),'LineWidth',3)
+end
+ylim([-0.75 0.75])
+xlim([1.1 20])
+ylabel('Fold change in expression')
+xlabel('kb from the deleted telomere')
+%xlim([1.5 max(xlim)])
+title([ '# genes = ' num2str(sum(idx_on_arm_with_deletion))])
+%print('-dpsc2',figname,'-append');
+%close; 
+
+
+%% Higher correlation w/fold change in expr, %P or dist-to-tel
+xl  = 1:5:1e5 ;
+c = NaN( 2 , numel(xl) );
+p = NaN( 2 , numel(xl) );
+corrtype = 'Spearman' ;
+warning('off')
+for I = 1:numel(xl)
+  %  expr_to_keep_idx = expr_in_409 > prctile( expr_in_409 , 75 ) ;
+    idx = dt < xl(I) ;
+    idx = idx & idx_on_arm_with_deletion ; % & expr_to_keep_idx ;
+    if sum(idx)>100
+        %    [ c(2,I) , p(1,I)] = corr( Y(idx) , dt(idx) ,'rows','complete','Type',corrtype) ;
+        %    [ c(3,I) , p(2,I)] = corr( Y(idx) , log10(dt(idx)) ,'rows','complete','Type',corrtype) ;
+        %    [ c(1,I) , p(3,I)] = corr( Y(idx) , X(idx) ,'rows','complete','Type',corrtype) ;
+        ft = fittype( 'poly1' );
+        opts = fitoptions( 'Method', 'LinearLeastSquares' );
+        opts.Robust = 'Bisquare';
+        [xData, yData] = prepareCurveData( zscore(X(idx)), Y(idx) );
+        if numel(xData)>100
+            [fitresultPP, gofPP] = fit( xData, yData , ft, opts );
+            [xData, yData] = prepareCurveData( zscore(dt(idx)), Y(idx) );
+            [fitresultD2T, gofD2T] = fit( xData, yData, ft, opts );
+            c(1,I) = gofD2T.rsquare ;
+            c(2,I) = gofPP.rsquare ;
+        end
+    end
+    if mod(I,50)==0 , fprintf('%d %0.0f%%\n' , I , (I/numel(xl))*100) , end  ;
+end
+%c2 = c ; c2(p<0.01) = NaN ;
+%%
+fh = figure('units','centimeters','position',[5 5 10 8]) ; 
+hold on ;
+idx = c(1,:) > 0 & c(2,:) > 0  ;
+yyy = log2(c(2,idx) ./ c(1,idx)) ; 
+yyy(yyy<-0.2)=-0.2;
+xxx = xl(idx)./1000 ; 
+plot(xxx,yyy,'.-r','LineWidth',3);
+plot(xxx(yyy>0 & xxx>30),yyy(yyy>0& xxx>30),'.-b','LineWidth',3)
+
+set(gca','xscale','log')
+ylim([-0.2 0.2])
+set(gca,'xtick',[0:5:40 50 60 75 100 125 150 200] )
+line(xlim,[0 0],'LineStyle','--','Color',[.7 .7 .7])
+ylabel('log2( % peripheral / dist-to-telomere )')
+xlim([21 100])
+set(gca,'ytick',-1:0.1:1 )
+xlabel('Using only genes < Xkb from deteleted telomeres')
 
 %%
 Yo = Y;

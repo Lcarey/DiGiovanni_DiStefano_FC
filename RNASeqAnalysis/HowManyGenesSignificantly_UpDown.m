@@ -27,13 +27,13 @@ end
 
 fh = figure('units','centimeters','position',[5 5 12 7]);
 data = NaN(0);
-data(3) = sum(G.p>0.1);
-data(1) = sum(G.p<0.1 & G.mean_Y < 0);
-data(2) = sum(G.p<0.1 & G.mean_Y > 0);
+data(3) = sum(G.p>0.05);
+data(1) = sum(G.p<0.05 & G.mean_Y < 0);
+data(2) = sum(G.p<0.05 & G.mean_Y > 0);
 bh = bar(data ,'FaceColor', [.7 .7 .7] ) ; 
 ylabel('# of genes that move > 5%')
 set(gca,'xticklabel',{'fold change < 0' 'fold change >0' 'no change'})
 xlim([.5 3.5])
-title('Genes that change location > 5%  (FDR=10%)')
+%title('Genes that change location > 5%  (FDR=10%)')
 text( [0.9 1.85 2.85] , [200 200 200] , string(data) ,'FontSize',15)
-ylim([0 380])
+ylim([0 410])

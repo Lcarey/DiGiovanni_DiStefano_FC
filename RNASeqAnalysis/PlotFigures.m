@@ -8,7 +8,7 @@ load('PP.mat');
 %high_expressed_idx =  PP.Expr_409 > prctile(PP.Expr_409 , 50) ; 
 %PP = PP( high_expressed_idx , :) ; 
 % Plot some figures
-figname = 'FoldChange_vs_Pdiff.eps';
+figname = '~/Downloads/FoldChange_vs_Pdiff.eps';
 
 %% Arms with deletions
 

@@ -233,3 +233,32 @@ for I = 1:numel(usids)
     plot(1,1,'ok','Marker',syms(I),'DisplayName',A.genotype{I+1}) ;
 end
 legend('location','best')
+
+
+%% For reviewer: 
+% 11.	Figure 7A: I would suggest fitting and plotting a loess regression or other solutions 
+%  for showing the trend in the data, as otherwise it looks like a general shift up-ward of the data, 
+%  which may be confounded by normalization issues
+%
+[X,o] = sort(X);
+Y = Y(o);
+yy100 = smooth( X , Y , 100 ,  'rloess' );
+Xmod = X ; 
+Xmod(Xmod>25) = 25 ; 
+
+
+fh = figure('units','centimeters','position',[5 5 12 7]);
+hold on; 
+sh = scatter( Xmod , Y , 20 , 'k' ,'MarkerFaceColor',[.7 .7 .7],'MarkerEdgeAlpha',0.5,'MarkerFaceAlpha',0.5);
+
+xlim([-1 max(Xmod)])
+ylim([-2.1 2.1])
+ylabel('Log_2 fold change in expression')
+xlabel('Decrease in time spent in the nuclear periphery (predicted)')
+line([-1 100] , [nanmedian(Y) nanmedian(Y)],'LineStyle','--','Color',[.7 .7 .7])
+
+plot( Xmod , yy100 ,'-r','LineWidth',1)
+
+ylim([-1 1])
+print('-dpsc2','~/Downloads/NewFig7AForRevision.eps');
+close;

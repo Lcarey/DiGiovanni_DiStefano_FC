@@ -1,9 +1,10 @@
-BB = readtable('~/Data/Brauer08/TableS1.xls');
+%% load data
+BB = readtable('~/CareyLab/ExternalData/Brauer08/TableS1.xls');
 ESR_UP_list = BB.ORF( strcmp(BB.ESR,'up'));
 ESR_DN_list = BB.ORF( strcmp(BB.ESR,'down'));
 GR_UP_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'up'));
 GR_DN_list = BB.ORF(strcmp(BB.GrowthRateResponse_1_5SD,'down'));
-%%
+
 cd('~/Develop/DiGiovanni_DiStefano_FC/RNASeqAnalysis/');
 load('PP.mat');
 SGD = dataset2table( loadSGDFeatures() );
@@ -12,7 +13,7 @@ SGD = dataset2table( loadSGDFeatures() );
 % Plot some figures
 figname = '~/Downloads/FoldChange_vs_Pdiff.eps';
 
-%% calculate the distance to the centromere for each gene
+% calculate the distance to the centromere for each gene
 SGD.KB2CEN = NaN( height(SGD),1);
 for I = 1:height(SGD)
     cen_pos = SGD.Start( strcmp(SGD.Chr , SGD.Chr{I})  & strcmp(SGD.TYPE,'centromere'));
@@ -22,7 +23,7 @@ for I = 1:height(SGD)
 end
 SGD = SGD( strcmp(SGD.TYPE,'ORF'),:);
 PP = innerjoin( SGD( :  ,  {'ORF' 'KB2CEN'}) , PP , 'LeftKey','ORF','RightKey','target_id' ); 
-%% Arms with deletions
+% Arms with deletions
 
     
 X = NaN(0);
@@ -87,9 +88,17 @@ for I = 1:size(bh,2)
 end
 ylim([-0.75 0.75])
 ylabel('Fold change in expression')
-xlabel('Decrease in time spent in the nuclear periphery')
+xlabel('Decrease in % peripheral')
 xlim([1.5 max(xlim)])
-title([ '# genes = ' num2str(numel(Y))])
+%title( 'all genes in all FC strains')
+
+[~,tbl,stats] = anova1( Y , GROUPS ,'off');
+[c,m,h,nms] = multcompare(stats,'Display','off') ;
+p = c(c(:,1)==2 , 6) ; 
+for I = 1:numel(p)
+    text( I+1.7 , 0.75 , sprintf( '%0.0e\n' , p(I)) );% , 'BackgroundColor' , 'white' );
+end
+
 %print('-dpsc2',figname,'-append');
 %close; 
 
@@ -217,17 +226,21 @@ print('-dpsc2',figname,'-append');
 %% plot area around STL1
 
 %% ChrIV 1,507,200 - 1,516,800 : Displacement of away from the NE in FC strains
-orfs_of_interest = PP.target_id( PP.chr == 4 & PP.Start > 1503000 & PP.Start <  1517000) ;
+% Figure 7 : scatter plot of individidual genes
+%
+%
+FIGNAME = '~/Downloads/ChangeInExpr__vs__Displacement__IndividualGenes' ; 
+
+orfs_of_interest = orfs( PP.chr == 4 & PP.Start > 1503000 & PP.Start <  1517000) ;
 % orfs_of_interest = PP.target_id( PP.chr == 4 & PP.Start > 1507200 & PP.Start <  1516800) ;
 ally = NaN(0);
 idx = ismember(orfs , orfs_of_interest);
 syms = 'o^phsvd<>+';
-fh = figure('units','centimeters','position',[5 5 12 7]);
+fh = figure('units','centimeters','position',[5 5 12 6]);
 hold on ;
-usids = unique(ID)
+usids = unique(ID) ; 
 for I = 1:numel(usids)
     sidx = ID==usids(I);
-    usids(I)
     gh = gscatter(  X(idx & sidx) ,  Y(idx & sidx) , orfs(idx & sidx) , parula(6) , syms(I));
     arrayfun(@(X)set(X,'MarkerFaceColor',get(X,'Color')) , gh);
 end
@@ -235,19 +248,26 @@ axis tight;
 lh = line( xlim , [0 0],'LineStyle','--','Color',[.7 .7 .7]) ; 
 set(get(get(lh,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
 ylabel('Fold change in expression');
-xlabel('Decrease in time spent in the nuclear periphery')
+xlabel('Decrease in % peripheral')
 
 for I = orfs_of_interest'
     edata = Y( strcmp(orfs , char(I))) ;
     [~,p] = ttest( edata );
     fprintf('%s\t%0.05f\n' , char(I) , p)
 end
+print('-dpng' , [ FIGNAME '_a' ] ,  '-r600') ; 
+close; 
 
-figure; hold on;
+
+fh = figure('units','centimeters','position',[5 5 12 7]);
+hold on;
 for I = 1:numel(usids)
-    plot(1,1,'ok','Marker',syms(I),'DisplayName',A.genotype{I+1}) ;
-end
+     plot(1,1,'ok','Marker',syms(I),'DisplayName',A.genotype{I+1} , 'MarkerFaceColor', [.7 .7 .7] ) ;
+ end
 legend('location','best')
+print('-dpng' , [ FIGNAME '_a_l' ] ,  '-r900') ; 
+close; 
+
 
 
 %% For reviewer: 
@@ -269,11 +289,11 @@ sh = scatter( Xmod , Y , 20 , 'k' ,'MarkerFaceColor',[.7 .7 .7],'MarkerEdgeAlpha
 xlim([-1 max(Xmod)])
 ylim([-2.1 2.1])
 ylabel('Log_2 fold change in expression')
-xlabel('Decrease in time spent in the nuclear periphery (predicted)')
+xlabel('Decrease in % peripheral (predicted)')
 line([-1 100] , [nanmedian(Y) nanmedian(Y)],'LineStyle','--','Color',[.7 .7 .7])
 
 plot( Xmod , yy100 ,'-r','LineWidth',1)
 
 ylim([-1 1])
-print('-dpsc2','~/Downloads/NewFig7AForRevision.eps');
+print('-dpng','~/Downloads/NewFig7AForRevision' , '-r600' );
 close;

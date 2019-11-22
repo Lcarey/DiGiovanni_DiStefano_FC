@@ -18,7 +18,7 @@ for I = 1:numel(usids)
 %    plot( X , Y , 'ok','MarkerFaceColor',[.7 .7 .7])
     xlabel('WT expression (log_{2}(TPM))');
     ylabel('FC expression (log_{2}(TPM))');
-    title( usids{I} )
+    title( A.genotype{ A.ID==str2double(usids(I)) } )
     set(gca,'xtick',0:1:10)
     set(gca,'ytick',0:1:10)
     xlim([0 12]);ylim(xlim)

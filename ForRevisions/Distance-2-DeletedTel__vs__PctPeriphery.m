@@ -82,7 +82,7 @@ warning('off')
 parfor I = 1:numel(xl)
   %  expr_to_keep_idx = expr_in_409 > prctile( expr_in_409 , 75 ) ;
     idx = dt < xl(I) ;  % threshold < X
-    idx = (dt < (xl(I) + 10*1000 )) & (dt > (xl(I) - 10*1000 )) ;  % threshold +/- 10kb (moving window)
+    idx = (dt < (xl(I) + 25*1000 )) & (dt > (xl(I) - 25*1000 )) ;  % threshold +/- 10kb (moving window)
     idx = idx & idx_on_arm_with_deletion ; % & expr_to_keep_idx ;
     if sum(idx)>10
             [ c3(I) ] = corr( Y(idx) , dt(idx) ,'rows','complete','Type',corrtype) ;
@@ -141,6 +141,10 @@ xlabel('Genes Xkb from deteleted telomeres')
 ylabel('Ability to predict changes in expression (r^2)')
 set(gca,'xtick',[0:5:40 50 60 75 100 125 150 200] )
 xlim([21 100])
+ylim([0.2 0.79])
 
 print( '-dpng' , [ FIGNAME '_inset'] , '-r600') ; 
 close ; 
+
+% p-value
+[~,p,ci,stats] = ttest( c1 , c2 )

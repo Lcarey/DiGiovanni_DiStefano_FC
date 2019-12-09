@@ -1,4 +1,9 @@
-%% load data
+% Figure 6. Validation of polymer models by live and fixed cell microscopy. 
+% Fig 6E : simulations vs measured
+
+FIGNAME = '~/Downloads/Figure6E__Simulated_vs_Measured_interlocus_distances__TRP1-LYS4' ; 
+% load data
+cd( '~/Develop/DiGiovanni_DiStefano_FC/Experimental_vs_Predicted_InterLocusDistances' )
 S = readtable('simulations.txt','FileType','text');
 S.X = round(S.X);
 S = sortrows(S,{'X','Y'},'ascend');
@@ -44,10 +49,15 @@ xlim([0.5 11.5])
 [c,p] = corr( S.Y(S.whichpoint=='mean') ,  G.mean_distance , 'type','Pearson')
 
 %%
+% G = experimental ;    S = simulated
 fh = figure('units','centimeters','position',[5 5 8 8]);
 hold on ;
-errorbar( G.mean_distance ,  S.Y( S.whichpoint=='mean') ,  S.Y( S.whichpoint=='mean')-S.Y( S.whichpoint=='low') , S.Y( S.whichpoint=='high')- S.Y( S.whichpoint=='mean') ,'ok' ,'MarkerFaceColor',[.7 .7 .7]) ;
-herrorbar( G.mean_distance ,  S.Y( S.whichpoint=='mean') , G.sem_distance , G.sem_distance ,'ok') ;
-xlabel('Experimentally measured distance')
-ylabel('Simulated inter-locus distance')
-gscatter( G.mean_distance ,  S.Y( S.whichpoint=='mean') , regexprep( cellstr(G.genotype) , '_' ,' ') , parula(height(G)) ,'.',30)
+herrorbar( S.Y( S.whichpoint=='mean') , G.mean_distance ,  S.Y( S.whichpoint=='mean')-S.Y( S.whichpoint=='low') , S.Y( S.whichpoint=='high')- S.Y( S.whichpoint=='mean') , '.k') ;
+errorbar(  S.Y( S.whichpoint=='mean') , G.mean_distance ,  G.std_distance , G.std_distance ,'ok') ;
+ylabel('Experimentally measured distance')
+xlabel('Simulated inter-locus distance')
+gscatter( S.Y( S.whichpoint=='mean') , G.mean_distance ,   regexprep( cellstr(G.genotype) , '_' ,' ') , parula(height(G)) ,'.',30)
+print( '-dpng' ,[ FIGNAME  '-1' ] , '-r300') ; 
+legend('off');
+print( '-dpng' ,[ FIGNAME  '-2' ] , '-r300') ; 
+close ; 

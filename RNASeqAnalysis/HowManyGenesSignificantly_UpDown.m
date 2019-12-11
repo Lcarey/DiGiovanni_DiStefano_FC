@@ -1,7 +1,8 @@
 %% Plot some figures
 %   how many genes increase expression? How many decrease
 FIGNAME = 'FoldChange_vs_Pdiff';
-load('PP.mat');
+WD = '~/Develop/DiGiovanni_DiStefano_FC/' ; 
+load([ WD 'RNASeqAnalysis/PP.mat' ] );
 T = table();
 X = NaN(0);
 Y = NaN(0);
@@ -21,15 +22,24 @@ T.ORF = orfs;
 T.ID = ID;
 
 G = grpstats( T( T.X>5 ,:) , 'ORF' , {'mean' 'median'} ,'DataVars','FoldChangeExpression');
-% G = grpstats( T  , 'ORF' , {'mean' 'median'} ,'DataVars','FoldChangeExpression');
+%G.Properties.VariableNames{strcmp(G.Properties.VariableNames,'nanmean_FoldChangeExpression')} = 'mean_FoldChangeExpression' ; 
 G.Properties.VariableNames{2} = 'N_FC_Strains' ; 
 
 G.p = NaN(height(G),1);
 for I = 1:height(G)
     [~, G.p(I) ] = ttest( T.FoldChangeExpression( strcmp(T.ORF , G.ORF{I})));
 end
-writetable( G , '~/Develop/DiGiovanni_DiStefano_FC/Data/FoldChangeExpression__GenesThatMove_gt5.txt' ) ; 
-% writetable( G , '~/Develop/DiGiovanni_DiStefano_FC/Data/FoldChangeExpression__AllGenes.txt' ) ; 
+writetable( G , [WD '/Data/FoldChangeExpression__GenesThatMove_gt5.txt' ] ) ; 
+
+
+Gall = grpstats( T  , 'ORF' , {'mean' 'median'} ,'DataVars','FoldChangeExpression');
+Gall.Properties.VariableNames{2} = 'N_FC_Strains' ; 
+
+Gall.p = NaN(height(Gall),1);
+for I = 1:height(Gall)
+    [~, Gall.p(I) ] = ttest( T.FoldChangeExpression( strcmp(T.ORF , Gall.ORF{I})));
+end
+writetable( Gall , '~/Develop/DiGiovanni_DiStefano_FC/Data/FoldChangeExpression__AllGenes.txt' ) ; 
 
 %%
 fh = figure('units','centimeters','position',[5 5 5 7]);
